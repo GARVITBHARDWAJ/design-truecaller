@@ -16,9 +16,14 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	compileOnly 'org.projectlombok:lombok:1.18.12'
+	compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:'3.10'
+	annotationProcessor 'org.projectlombok:lombok:1.18.12'
+	implementation('com.google.guava:guava:29.0-jre')
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+	testCompileOnly group: 'org.mockito', name: 'mockito-junit-jupiter', version: '3.3.3'
 }
 
 tasks.named('test') {
