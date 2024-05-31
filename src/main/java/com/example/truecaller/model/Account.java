@@ -1,5 +1,6 @@
 package com.example.truecaller.model;
 
+import com.example.truecaller.exception.ContactsExceededException;
 import com.example.truecaller.model.common.Contact;
 import com.example.truecaller.model.common.PersonalInfo;
 import com.example.truecaller.model.common.SocialInfo;
@@ -8,6 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -42,6 +45,17 @@ public abstract class Account {
         this.personalInfo = new PersonalInfo(lastName);
     }
 
+    public abstract void register(UserCategory userCategory, String userName, String password,
+                                  String email, String phoneNumber, String countryCode, String firstName);
 
+    public abstract void addContact(User user) throws ContactsExceededException;
+    public abstract void removeContract(String number);
+    public abstract void blockNumber(String number);
+    public abstract void unblockNumber(String number);
+    public abstract void reportSpam(String number, String reason);
+    public abstract void upgrade(UserCategory userCategory);
+    public abstract boolean isBlocked(String number);
+    public abstract boolean canReceive(String number);
+    public abstract boolean importContracts(List<User> users);
 
 }
