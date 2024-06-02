@@ -1,7 +1,10 @@
 package com.example.truecaller.model;
 
+import com.example.truecaller.exception.BlockLimitExceededException;
+import com.example.truecaller.exception.ContactDoesNotExistexception;
 import com.example.truecaller.exception.ContactsExceededException;
 import com.example.truecaller.model.common.Contact;
+import com.example.truecaller.model.common.GlobalSpam;
 import com.example.truecaller.model.common.PersonalInfo;
 import static com.example.truecaller.model.common.Constant.*;
 
@@ -43,7 +46,8 @@ public class User extends Account {
     }
 
     private void insertToTries(String phoneNumber, String firstName) {
-        //TBD
+        getContactTrie().insert(phoneNumber);
+        getContactTrie().insert(firstName);
     }
 
     private void checkAddUser() throws ContactsExceededException {
@@ -56,23 +60,48 @@ public class User extends Account {
     }
 
     @Override
-    public void removeContract(String number) {
-
+    public void removeContract(String number) throws ContactDoesNotExistexception {
+        User contact = getContacts().get(number);
+        if(contact == null) {
+            throw new ContactDoesNotExistexception("Contact Does not exist");
+        }
+        getContacts().remove(number);
+        getContactTrie().delete(number);
+        getContactTrie().delete(getPersonalInfo().getFirstName());
     }
 
     @Override
-    public void blockNumber(String number) {
+    public void blockNumber(String number) throws BlockLimitExceededException {
+        checkBlockUser();
+        getBlockedContacts().add(number);
+    }
 
+    private void checkBlockUser() throws BlockLimitExceededException {
+        switch(this.getUserCategory()) {
+            case FREE:
+                if(this.getContacts().size() >= MAX_FREE_USER_BLOCKED_CONTACTS) {
+                    throw new BlockLimitExceededException("exceeded max contacts to be blocked");
+                }
+            case GOLD:
+                if(this.getContacts().size() >= MAX_GOLD_USER_BLOCKED_CONTACTS) {
+                    throw new BlockLimitExceededException("exceeded max contacts to be blocked");
+                }
+            case PLATINUM:
+                if(this.getContacts().size() >= MAX_PLATINUM_USER_BLOCKED_CONTACTS) {
+                    throw new BlockLimitExceededException("exceeded max contacts to be blocked");
+                }
+        }
     }
 
     @Override
     public void unblockNumber(String number) {
-
+        getBlockedContacts().remove();
     }
 
     @Override
     public void reportSpam(String number, String reason) {
-
+        getBlockedContacts().add(number);
+        GlobalSpam.INSTANCE.reportSpam(number, this.getPhoneNumber(), reason);
     }
 
     @Override
