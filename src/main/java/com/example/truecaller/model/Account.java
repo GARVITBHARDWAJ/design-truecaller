@@ -1,12 +1,16 @@
 package com.example.truecaller.model;
 
+import com.example.truecaller.exception.BlockLimitExceededException;
+import com.example.truecaller.exception.ContactDoesNotExistexception;
 import com.example.truecaller.exception.ContactsExceededException;
 import com.example.truecaller.model.common.Contact;
 import com.example.truecaller.model.common.PersonalInfo;
 import com.example.truecaller.model.common.SocialInfo;
 import com.example.truecaller.model.common.Tag;
+import com.example.truecaller.model.tries.ContactTrie;
 import lombok.Getter;
 import lombok.Setter;
+import orestes.bloomfilter.CountingBloomFilter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,8 +53,8 @@ public abstract class Account {
                                   String email, String phoneNumber, String countryCode, String firstName);
 
     public abstract void addContact(User user) throws ContactsExceededException;
-    public abstract void removeContract(String number);
-    public abstract void blockNumber(String number);
+    public abstract void removeContract(String number) throws ContactDoesNotExistexception;
+    public abstract void blockNumber(String number) throws BlockLimitExceededException;
     public abstract void unblockNumber(String number);
     public abstract void reportSpam(String number, String reason);
     public abstract void upgrade(UserCategory userCategory);
