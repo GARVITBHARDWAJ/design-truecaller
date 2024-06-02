@@ -6,11 +6,11 @@ import com.example.truecaller.exception.ContactsExceededException;
 import com.example.truecaller.model.common.Contact;
 import com.example.truecaller.model.common.GlobalSpam;
 import com.example.truecaller.model.common.PersonalInfo;
+import orestes.bloomfilter.FilterBuilder;
+
 import static com.example.truecaller.model.common.Constant.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class User extends Account {
 
@@ -106,21 +106,60 @@ public class User extends Account {
 
     @Override
     public void upgrade(UserCategory userCategory) {
+        int count = 0;
+        int blockedCount = 0;
+        switch (userCategory) {
+            case GOLD:
+                count = MAX_FREE_USER_CONTACTS;
+                blockedCount = MAX_GOLD_USER_BLOCKED_CONTACTS;
+                break;
+            case PLATINUM:
+                count = MAX_PLATINUM_USER_CONTACTS;
+                blockedCount = MAX_PLATINUM_USER_BLOCKED_CONTACTS;
+                break;
+        }
+        upgradeContacts(count);
+        upgradeBlockedContact(blockedCount);
+    }
 
+    private void upgradeBlockedContact(int blockedCount) {
+        setBlockedContacts(new FilterBuilder(blockedCount, .01)
+                .buildCountingBloomFilter());
+        Set<String> upgradedSet = new HashSet<>();
+        for (String blocked : getBlockedSet()) {
+            upgradedSet.add(blocked);
+            getBlockedContacts().add(blocked);
+        }
+    }
+
+    private void upgradeContacts(int count) {
+        Map<String,User> upgradedContacts = new HashMap<>(count);
+        for (Map.Entry<String, User> entry : getContacts().entrySet()) {
+            upgradedContacts.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+        setContacts(upgradedContacts);
     }
 
     @Override
     public boolean isBlocked(String number) {
-        return false;
+        return getBlockedContacts().contains(number);
     }
 
     @Override
     public boolean canReceive(String number) {
-        return false;
+        return !isBlocked(number) && !GlobalSpam.INSTANCE.isGlobalSpam(number);
     }
 
     @Override
     public boolean importContracts(List<User> users) {
-        return false;
+        for(User user : users) {
+            try {
+                addContact(user);
+            } catch (ContactsExceededException cee) {
+                System.out.println("Some of the contact could not be imported as limit exceeded");
+                return false;
+            }
+        }
+        return true;
     }
 }
